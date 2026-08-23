@@ -1,19 +1,8 @@
 import xlsx from 'xlsx';
 import ExcelJS from 'exceljs';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import PlanilhaCompras from '../models/PlanilhaCompras.js';
 import ItemCompra from '../models/ItemCompra.js';
 import Cronograma from '../models/Cronograma.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const uploadsDir = path.join(__dirname, '../../uploads');
-
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
 
 export const importarPlanilha = async (req, res) => {
   try {
@@ -59,9 +48,6 @@ export const importarPlanilha = async (req, res) => {
         await cronograma.save();
       }
     }
-
-    const caminhoArquivo = path.join(uploadsDir, `${planilha._id}.xlsx`);
-    fs.writeFileSync(caminhoArquivo, arquivo.buffer);
 
     const itens = dataRows.map(row => ({
       planilha: planilha._id,
@@ -110,11 +96,6 @@ export const exportarPlanilha = async (req, res) => {
     const planilha = await PlanilhaCompras.findById(planilhaId).populate('categoria');
     if (!planilha) {
       return res.status(404).json({ message: 'Planilha não encontrada.' });
-    }
-
-    const caminhoArquivo = path.join(uploadsDir, `${planilhaId}.xlsx`);
-    if (!fs.existsSync(caminhoArquivo)) {
-      return res.status(404).json({ message: 'Arquivo original não encontrado.' });
     }
 
     const Solicitacao = (await import('../models/Solicitacao.js')).default;
@@ -184,6 +165,7 @@ export const exportarPlanilha = async (req, res) => {
         novaLinha.getCell(11).value = sol.valorTotal ?? null;
         novaLinha.getCell(12).value = sol.grauPrioridade ?? null;
         novaLinha.getCell(13).value = sol.dataDesejadaAquisicao ? new Date(sol.dataDesejadaAquisicao) : null;
+        novaLinha.getCell(13).numFmt = 'dd/mm/yyyy';
         novaLinha.getCell(14).value = sol.temVinculacao ? 'SIM' : 'NÃO';
         novaLinha.getCell(15).value = sol.justificativa ?? null;
         novaLinha.getCell(16).value = sol.setor?.nome ?? null;
