@@ -11,6 +11,7 @@ import SetorRoutes from './routes/SetorRoutes.js';
 import CategoriaRoutes from './routes/CategoriaRoutes.js';
 import { autenticar, autorizar } from './middlewares/auth.js';
 import LogRoutes from './routes/LogRoutes.js';
+import SuapRoutes from './routes/SuapRoutes.js';
 
 dotenv.config();
 
@@ -23,7 +24,9 @@ app.get('/', (req, res) => {
   res.json({ message: 'API funcionando!' });
 });
 
-app.use('/api/usuarios', UsuarioRoutes);
+app.use('/api/usuarios', UsuarioRoutes); 
+
+app.use('/auth/suap', SuapRoutes);
 
 app.use(autenticar);
 
