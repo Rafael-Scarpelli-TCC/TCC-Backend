@@ -2,15 +2,49 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 const usuarioSchema = new mongoose.Schema({
-  nome: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  senha: { type: String, required: true },
-  setor: { type: mongoose.Schema.Types.ObjectId, ref: 'Setor', default: null },
-  perfil: { type: String, enum: ['SERVIDOR', 'APROVADOR', 'ADMINISTRADOR'], default: 'SERVIDOR' },
+  nome: {
+    type: String,
+    required: true
+  },
+
+  email: {
+    type: String,
+    required: true,
+    unique: true
+  },
+
+  senha: {
+    type: String,
+    required: true
+  },
+
+  identificacao: {
+    type: String,
+    required: true,
+    unique: true
+  },
+
+  tipoUsuario: {
+    type: String,
+    required: true
+  },
+
+  setor: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Setor',
+    default: null
+  },
+
+  perfil: {
+    type: String,
+    enum: ['USER', 'ADMIN'],
+    default: 'USER'
+  }
 });
 
 usuarioSchema.pre('save', async function () {
   if (!this.isModified('senha')) return;
+
   const salt = await bcrypt.genSalt(10);
   this.senha = await bcrypt.hash(this.senha, salt);
 });
