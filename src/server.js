@@ -1,50 +1,47 @@
-import express from 'express';
-import mongoose from 'mongoose';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import PlanilhaRoutes from './routes/PlanilhaRoutes.js';
-import ItemCompraRoutes from './routes/ItemCompraRoutes.js';
-import SolicitacaoRoutes from './routes/SolicitacaoRoutes.js';
-import CronogramaRoutes from './routes/CronogramaRoutes.js';
-import UsuarioRoutes from './routes/UsuarioRoutes.js';
-import SetorRoutes from './routes/SetorRoutes.js';
-import CategoriaRoutes from './routes/CategoriaRoutes.js';
-import { autenticar, autorizar } from './middlewares/auth.js';
-import LogRoutes from './routes/LogRoutes.js';
-import SuapRoutes from './routes/SuapRoutes.js';
+const SUAP_AUTH_URL = 'https://suap.ifpr.edu.br/o/authorize/';
+const SUAP_USER_URL = 'https://suap.ifpr.edu.br/api/eu/';
 
-dotenv.config();
-
-const app = express();
-
-app.use(cors({ origin: process.env.FRONTEND_URL || '*' }));
-app.use(express.json());
-
-app.get('/', (req, res) => {
-  res.json({ message: 'API funcionando!' });
-});
-
-app.use('/api/usuarios', UsuarioRoutes); 
-
-app.use('/auth/suap', SuapRoutes);
-
-app.use(autenticar);
-
-app.use('/api/planilha', autorizar('ADMINISTRADOR'), PlanilhaRoutes);
-app.use('/api/itens', ItemCompraRoutes);
-app.use('/api/solicitacoes', SolicitacaoRoutes);
-app.use('/api/cronograma', autorizar('ADMINISTRADOR'), CronogramaRoutes);
-app.use('/api/setores', autorizar('ADMINISTRADOR'), SetorRoutes);
-app.use('/api/categorias', CategoriaRoutes);
-app.use('/api/logs', LogRoutes);
-
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => {
-    console.log('MongoDB conectado!');
-    app.listen(process.env.PORT, () => {
-      console.log(`Servidor rodando na porta ${process.env.PORT}`);
-    });
-  })
-  .catch((err) => {
-    console.error('Erro ao conectar no MongoDB:', err);
+export const gerarUrlLoginSuap = () => {
+  const params = new URLSearchParams({
+    response_type: 'token',
+    client_id: process.env.SUAP_CLIENT_ID,
+    redirect_uri: process.env.SUAP_REDIRECT_URI,
   });
+
+  return `${SUAP_AUTH_URL}?${params.toString()}`;
+};
+
+
+export const consultarUsuarioSuap = async (accessToken) => {
+  if (!accessToken) {
+    throw new Error('Access token do SUAP não fornecido.');
+  }
+
+  const response = await fetch(SUAP_USER_URL, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: 'application/json',
+    },
+  });
+
+  const texto = await response.text();
+
+  console.log('Resposta do SUAP:');
+  console.log('Status:', response.status);
+  console.log('Body:', texto);
+
+  if (!response.ok) {
+    throw new Error(
+      `SUAP respondeu ${response.status}: ${texto}`
+    );
+  }
+
+  try {
+    return JSON.parse(texto);
+  } catch {
+    throw new Error(
+      `SUAP respondeu com conteúdo que não é JSON: ${texto}`
+    );
+  }
+};
