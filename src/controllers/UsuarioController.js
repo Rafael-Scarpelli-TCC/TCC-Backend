@@ -262,3 +262,31 @@ export const cadastrarViaSuap = async (req, res) => {
     });
   }
 };
+
+export const verificarIdentificacao = async (req, res) => {
+  try {
+    const { identificacao } = req.params;
+
+    if (!identificacao) {
+      return res.status(400).json({
+        message: 'Identificação não informada.'
+      });
+    }
+
+    const usuario = await Usuario.findOne({
+      identificacao
+    });
+
+    return res.json({
+      cadastrado: !!usuario
+    });
+
+  } catch (error) {
+    console.error('Erro ao verificar identificação:', error);
+
+    return res.status(500).json({
+      message: 'Erro ao verificar identificação.',
+      error: error.message
+    });
+  }
+};

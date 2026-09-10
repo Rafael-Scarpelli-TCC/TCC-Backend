@@ -5,7 +5,8 @@ import {
   listarUsuarios,
   atualizarUsuario,
   criarUsuario,
-  cadastrarViaSuap
+  cadastrarViaSuap,
+  verificarIdentificacao
 } from '../controllers/UsuarioController.js';
 
 import {
@@ -18,6 +19,11 @@ const router = express.Router();
 router.post('/login', login);
 
 router.post('/cadastro-suap', cadastrarViaSuap);
+
+router.get(
+  '/verificar-identificacao/:identificacao',
+  verificarIdentificacao
+);
 
 router.get(
   '/',
