@@ -1,13 +1,42 @@
 import express from 'express';
-import { login, listarUsuarios, atualizarUsuario, criarUsuario } from '../controllers/UsuarioController.js';
-import { autenticar, autorizar } from '../middlewares/auth.js';
+
+import {
+  login,
+  listarUsuarios,
+  atualizarUsuario,
+  criarUsuario,
+  cadastrarViaSuap
+} from '../controllers/UsuarioController.js';
+
+import {
+  autenticar,
+  autorizar
+} from '../middlewares/auth.js';
 
 const router = express.Router();
 
 router.post('/login', login);
 
-router.get('/', autenticar, listarUsuarios);
-router.post('/', autenticar, autorizar('ADMINISTRADOR'), criarUsuario);
-router.patch('/:id', autenticar, autorizar('ADMINISTRADOR'), atualizarUsuario);
+router.post('/cadastro-suap', cadastrarViaSuap);
+
+router.get(
+  '/',
+  autenticar,
+  listarUsuarios
+);
+
+router.post(
+  '/',
+  autenticar,
+  autorizar('ADMIN'),
+  criarUsuario
+);
+
+router.patch(
+  '/:id',
+  autenticar,
+  autorizar('ADMIN'),
+  atualizarUsuario
+);
 
 export default router;

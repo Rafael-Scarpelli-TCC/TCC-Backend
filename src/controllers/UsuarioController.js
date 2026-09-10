@@ -1,5 +1,4 @@
 import jwt from 'jsonwebtoken';
-
 import Usuario from '../models/Usuario.js';
 import Setor from '../models/Setor.js';
 
@@ -41,7 +40,6 @@ export const login = async (req, res) => {
 
     res.json({
       token,
-
       usuario: {
         id: usuario._id,
         nome: usuario.nome,
@@ -56,7 +54,7 @@ export const login = async (req, res) => {
     });
 
   } catch (error) {
-    console.error(error);
+    console.error('Erro ao fazer login:', error);
 
     res.status(500).json({
       message: 'Erro ao fazer login.',
@@ -80,7 +78,7 @@ export const listarUsuarios = async (req, res) => {
     });
 
   } catch (error) {
-    console.error(error);
+    console.error('Erro ao listar usuários:', error);
 
     res.status(500).json({
       message: 'Erro ao listar usuários.',
@@ -92,7 +90,6 @@ export const listarUsuarios = async (req, res) => {
 export const atualizarUsuario = async (req, res) => {
   try {
     const { id } = req.params;
-
     const { perfil, setorId } = req.body;
 
     const dados = {};
@@ -109,7 +106,8 @@ export const atualizarUsuario = async (req, res) => {
       id,
       dados,
       {
-        returnDocument: 'after'
+        new: true,
+        runValidators: true
       }
     )
       .select('-senha')
@@ -127,7 +125,7 @@ export const atualizarUsuario = async (req, res) => {
     });
 
   } catch (error) {
-    console.error(error);
+    console.error('Erro ao atualizar usuário:', error);
 
     res.status(500).json({
       message: 'Erro ao atualizar usuário.',
@@ -171,7 +169,6 @@ export const criarUsuario = async (req, res) => {
 
     res.status(201).json({
       message: 'Usuário criado com sucesso!',
-
       usuario: {
         id: usuario._id,
         nome: usuario.nome,
@@ -183,10 +180,84 @@ export const criarUsuario = async (req, res) => {
     });
 
   } catch (error) {
-    console.error(error);
+    console.error('Erro ao criar usuário:', error);
 
     res.status(500).json({
       message: 'Erro ao criar usuário.',
+      error: error.message
+    });
+  }
+};
+
+export const cadastrarViaSuap = async (req, res) => {
+  try {
+    const {
+      nome,
+      email,
+      identificacao,
+      tipoUsuario,
+      senha
+    } = req.body;
+
+    if (
+      !nome ||
+      !email ||
+      !identificacao ||
+      !tipoUsuario ||
+      !senha
+    ) {
+      return res.status(400).json({
+        message: 'Todos os campos obrigatórios devem ser preenchidos.'
+      });
+    }
+
+    if (senha.length < 6) {
+      return res.status(400).json({
+        message: 'A senha deve possuir pelo menos 6 caracteres.'
+      });
+    }
+
+    const existe = await Usuario.findOne({
+      $or: [
+        { email },
+        { identificacao }
+      ]
+    });
+
+    if (existe) {
+      return res.status(409).json({
+        message: 'Este usuário já possui cadastro no sistema.'
+      });
+    }
+
+    const usuario = await Usuario.create({
+      nome,
+      email,
+      identificacao,
+      tipoUsuario,
+      senha,
+      perfil: 'USER',
+      setor: null
+    });
+
+    return res.status(201).json({
+      message: 'Cadastro realizado com sucesso!',
+      usuario: {
+        id: usuario._id,
+        nome: usuario.nome,
+        email: usuario.email,
+        identificacao: usuario.identificacao,
+        tipoUsuario: usuario.tipoUsuario,
+        perfil: usuario.perfil,
+        setor: usuario.setor
+      }
+    });
+
+  } catch (error) {
+    console.error('Erro no cadastro via SUAP:', error);
+
+    return res.status(500).json({
+      message: 'Erro ao realizar cadastro.',
       error: error.message
     });
   }
