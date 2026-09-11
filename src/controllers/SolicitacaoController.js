@@ -94,7 +94,7 @@ export const listarSolicitacoes = async (req, res) => {
 
     if (status) filtro.status = status;
 
-    if (req.usuario.perfil !== 'ADMINISTRADOR') {
+    if (req.usuario.perfil !== 'ADMIN') {
       filtro.solicitante = req.usuario._id;
     }
 
@@ -116,7 +116,7 @@ export const listarSolicitacoesAprovador = async (req, res) => {
   try {
     const { status } = req.query;
 
-    if (!req.isAprovador && req.usuario.perfil !== 'ADMINISTRADOR') {
+    if (!req.isAprovador && req.usuario.perfil !== 'ADMIN') {
       return res.json({ total: 0, solicitacoes: [] });
     }
 
@@ -146,7 +146,7 @@ export const aprovarRejeitarSolicitacao = async (req, res) => {
     const { id } = req.params;
     const { decisao, comentario } = req.body;
 
-    if (!req.isAprovador && req.usuario.perfil !== 'ADMINISTRADOR') {
+    if (!req.isAprovador && req.usuario.perfil !== 'ADMIN') {
       return res.status(403).json({ message: 'Acesso negado.' });
     }
 
@@ -227,7 +227,7 @@ export const editarSolicitacao = async (req, res) => {
 
     const isSolicitante = solicitacao.solicitante.toString() === req.usuario._id.toString();
     const isAprovadorDoSetor = req.isAprovador && req.setorAprovador?._id.toString() === solicitacao.setor?.toString();
-    const isAdmin = req.usuario.perfil === 'ADMINISTRADOR';
+    const isAdmin = req.usuario.perfil === 'ADMIN';
 
     if (!isSolicitante && !isAprovadorDoSetor && !isAdmin) {
       return res.status(403).json({ message: 'Você não tem permissão para editar esta solicitação.' });

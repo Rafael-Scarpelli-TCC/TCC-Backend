@@ -16,9 +16,15 @@ import {
 
 const router = express.Router();
 
-router.post('/login', login);
+router.post(
+  '/login',
+  login
+);
 
-router.post('/cadastro-suap', cadastrarViaSuap);
+router.post(
+  '/cadastro-suap',
+  cadastrarViaSuap
+);
 
 router.get(
   '/verificar-identificacao/:identificacao',
