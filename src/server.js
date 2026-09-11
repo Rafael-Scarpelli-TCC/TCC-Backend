@@ -11,44 +11,85 @@ import UsuarioRoutes from './routes/UsuarioRoutes.js';
 import SetorRoutes from './routes/SetorRoutes.js';
 import CategoriaRoutes from './routes/CategoriaRoutes.js';
 import LogRoutes from './routes/LogRoutes.js';
-
 import SuapRoutes from './routes/SuapRoutes.js';
 
-import { autenticar, autorizar } from './middlewares/auth.js';
+import {
+  autenticar,
+  autorizar
+} from './middlewares/auth.js';
 
 dotenv.config();
 
 const app = express();
 
-app.use(cors({ origin: process.env.FRONTEND_URL || '*' }));
+app.use(cors({
+  origin: process.env.FRONTEND_URL || '*'
+}));
+
 app.use(express.json());
 
 app.get('/', (req, res) => {
-  res.json({ message: 'API funcionando!' });
+  res.json({
+    message: 'API funcionando!'
+  });
 });
 
 app.use('/api/usuarios', UsuarioRoutes);
-
 app.use('/auth/suap', SuapRoutes);
 
 app.use(autenticar);
 
-app.use('/api/planilha', autorizar('ADMINISTRADOR'), PlanilhaRoutes);
-app.use('/api/itens', ItemCompraRoutes);
-app.use('/api/solicitacoes', SolicitacaoRoutes);
-app.use('/api/cronograma', autorizar('ADMINISTRADOR'), CronogramaRoutes);
-app.use('/api/setores', autorizar('ADMINISTRADOR'), SetorRoutes);
-app.use('/api/categorias', CategoriaRoutes);
-app.use('/api/logs', LogRoutes);
+app.use(
+  '/api/planilha',
+  autorizar('ADMIN'),
+  PlanilhaRoutes
+);
+
+app.use(
+  '/api/cronograma',
+  autorizar('ADMIN'),
+  CronogramaRoutes
+);
+
+app.use(
+  '/api/setores',
+  autorizar('ADMIN'),
+  SetorRoutes
+);
+
+app.use(
+  '/api/itens',
+  ItemCompraRoutes
+);
+
+app.use(
+  '/api/solicitacoes',
+  SolicitacaoRoutes
+);
+
+app.use(
+  '/api/categorias',
+  CategoriaRoutes
+);
+
+app.use(
+  '/api/logs',
+  LogRoutes
+);
 
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
     console.log('MongoDB conectado!');
 
     app.listen(process.env.PORT, () => {
-      console.log(`Servidor rodando na porta ${process.env.PORT}`);
+      console.log(
+        `Servidor rodando na porta ${process.env.PORT}`
+      );
     });
   })
-  .catch((err) => {
-    console.error('Erro ao conectar no MongoDB:', err);
+  .catch((error) => {
+    console.error(
+      'Erro ao conectar no MongoDB:',
+      error
+    );
   });
