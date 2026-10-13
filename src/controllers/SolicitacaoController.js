@@ -58,6 +58,19 @@ export const criarSolicitacao = async (req, res) => {
       };
     }
 
+    if (!dadosItem.descricao || !String(dadosItem.descricao).trim()) {
+      return res.status(400).json({
+        message: "A descrição do item é obrigatória.",
+      });
+    }
+
+    const quantidadeNumero = Number(quantidade);
+    if (!Number.isFinite(quantidadeNumero) || quantidadeNumero <= 0) {
+      return res.status(400).json({
+        message: "A quantidade deve ser um número maior que zero.",
+      });
+    }
+
     const valorUnitario = Number(dadosItem.valorUnitarioEstimado) || 0;
     const valorTotalCalculado =
       Math.round((Number(quantidade) * valorUnitario || 0) * 100) / 100;
