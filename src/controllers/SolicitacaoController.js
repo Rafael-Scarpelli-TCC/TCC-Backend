@@ -1,6 +1,6 @@
-import Solicitacao from '../models/Solicitacao.js';
-import ItemCompra from '../models/ItemCompra.js';
-import { criarLog } from './LogController.js';
+import Solicitacao from "../models/Solicitacao.js";
+import ItemCompra from "../models/ItemCompra.js";
+import { criarLog } from "./LogController.js";
 
 export const criarSolicitacao = async (req, res) => {
   try {
@@ -41,7 +41,7 @@ export const criarSolicitacao = async (req, res) => {
     if (itemCompraId) {
       const itemCompra = await ItemCompra.findById(itemCompraId);
       if (!itemCompra) {
-        return res.status(404).json({ message: 'Item não encontrado.' });
+        return res.status(404).json({ message: "Item não encontrado." });
       }
       dadosItem = {
         itemCompra: itemCompra._id,
@@ -58,12 +58,16 @@ export const criarSolicitacao = async (req, res) => {
       };
     }
 
+    const valorUnitario = Number(dadosItem.valorUnitarioEstimado) || 0;
+    const valorTotalCalculado =
+      Math.round((Number(quantidade) * valorUnitario || 0) * 100) / 100;
+
     const solicitacao = await Solicitacao.create({
       ...dadosItem,
       solicitante: req.usuario._id,
       setor: req.usuario.setor?._id || null,
       quantidade,
-      valorTotal,
+      valorTotal: valorTotalCalculado,
       grauPrioridade,
       dataDesejadaAquisicao,
       temVinculacao,
@@ -76,15 +80,22 @@ export const criarSolicitacao = async (req, res) => {
       dataEnvio: new Date(),
     });
 
-    await criarLog(req.usuario._id, solicitacao._id, 'CRIACAO', 'Solicitação criada.');
+    await criarLog(
+      req.usuario._id,
+      solicitacao._id,
+      "CRIACAO",
+      "Solicitação criada.",
+    );
 
-    res.status(201).json({ message: 'Solicitação criada com sucesso!', solicitacao });
+    res
+      .status(201)
+      .json({ message: "Solicitação criada com sucesso!", solicitacao });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Erro ao criar solicitação.', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Erro ao criar solicitação.", error: error.message });
   }
-
-  
 };
 
 export const listarSolicitacoes = async (req, res) => {
@@ -94,21 +105,23 @@ export const listarSolicitacoes = async (req, res) => {
 
     if (status) filtro.status = status;
 
-    if (req.usuario.perfil !== 'ADMIN') {
+    if (req.usuario.perfil !== "ADMIN") {
       filtro.solicitante = req.usuario._id;
     }
 
     const solicitacoes = await Solicitacao.find(filtro)
-      .populate('solicitante', 'nome email')
-      .populate('setor', 'nome')
-      .populate('categoria', 'nome')
-      .populate('itemCompra')
+      .populate("solicitante", "nome email")
+      .populate("setor", "nome")
+      .populate("categoria", "nome")
+      .populate("itemCompra")
       .sort({ dataCriacao: -1 });
 
     res.json({ total: solicitacoes.length, solicitacoes });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Erro ao listar solicitações.', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Erro ao listar solicitações.", error: error.message });
   }
 };
 
@@ -116,7 +129,7 @@ export const listarSolicitacoesAprovador = async (req, res) => {
   try {
     const { status } = req.query;
 
-    if (!req.isAprovador && req.usuario.perfil !== 'ADMIN') {
+    if (!req.isAprovador && req.usuario.perfil !== "ADMIN") {
       return res.json({ total: 0, solicitacoes: [] });
     }
 
@@ -128,16 +141,18 @@ export const listarSolicitacoesAprovador = async (req, res) => {
     }
 
     const solicitacoes = await Solicitacao.find(filtro)
-      .populate('solicitante', 'nome email')
-      .populate('setor', 'nome')
-      .populate('categoria', 'nome')
-      .populate('itemCompra')
+      .populate("solicitante", "nome email")
+      .populate("setor", "nome")
+      .populate("categoria", "nome")
+      .populate("itemCompra")
       .sort({ dataCriacao: -1 });
 
     res.json({ total: solicitacoes.length, solicitacoes });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Erro ao listar solicitações.', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Erro ao listar solicitações.", error: error.message });
   }
 };
 
@@ -146,11 +161,11 @@ export const aprovarRejeitarSolicitacao = async (req, res) => {
     const { id } = req.params;
     const { decisao, comentario } = req.body;
 
-    if (!req.isAprovador && req.usuario.perfil !== 'ADMIN') {
-      return res.status(403).json({ message: 'Acesso negado.' });
+    if (!req.isAprovador && req.usuario.perfil !== "ADMIN") {
+      return res.status(403).json({ message: "Acesso negado." });
     }
 
-    const status = decisao ? 'APROVADA' : 'REJEITADA';
+    const status = decisao ? "APROVADA" : "REJEITADA";
 
     const solicitacao = await Solicitacao.findByIdAndUpdate(
       id,
@@ -161,21 +176,28 @@ export const aprovarRejeitarSolicitacao = async (req, res) => {
         status,
         dataAtualizacao: new Date(),
       },
-      { new: true }
+      { new: true },
     );
 
     if (!solicitacao) {
-      return res.status(404).json({ message: 'Solicitação não encontrada.' });
+      return res.status(404).json({ message: "Solicitação não encontrada." });
     }
 
-    await criarLog(req.usuario._id, solicitacao._id, decisao ? 'APROVACAO' : 'REJEICAO', comentario || '');
+    await criarLog(
+      req.usuario._id,
+      solicitacao._id,
+      decisao ? "APROVACAO" : "REJEICAO",
+      comentario || "",
+    );
 
-    res.json({ message: 'Solicitação atualizada com sucesso!', solicitacao });
+    res.json({ message: "Solicitação atualizada com sucesso!", solicitacao });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Erro ao atualizar solicitação.', error: error.message });
+    res.status(500).json({
+      message: "Erro ao atualizar solicitação.",
+      error: error.message,
+    });
   }
-  
 };
 
 export const cancelarSolicitacao = async (req, res) => {
@@ -185,57 +207,81 @@ export const cancelarSolicitacao = async (req, res) => {
     const solicitacao = await Solicitacao.findById(id);
 
     if (!solicitacao) {
-      return res.status(404).json({ message: 'Solicitação não encontrada.' });
+      return res.status(404).json({ message: "Solicitação não encontrada." });
     }
 
-    if (solicitacao.status !== 'PENDENTE') {
-      return res.status(400).json({ message: 'Apenas solicitações pendentes podem ser canceladas.' });
+    if (solicitacao.status !== "PENDENTE") {
+      return res.status(400).json({
+        message: "Apenas solicitações pendentes podem ser canceladas.",
+      });
     }
 
     if (solicitacao.solicitante.toString() !== req.usuario._id.toString()) {
-      return res.status(403).json({ message: 'Você não pode cancelar esta solicitação.' });
+      return res
+        .status(403)
+        .json({ message: "Você não pode cancelar esta solicitação." });
     }
 
-    solicitacao.status = 'CANCELADA';
+    solicitacao.status = "CANCELADA";
     solicitacao.dataAtualizacao = new Date();
     await solicitacao.save();
 
-    await criarLog(req.usuario._id, solicitacao._id, 'CANCELAMENTO', 'Solicitação cancelada pelo solicitante.');
+    await criarLog(
+      req.usuario._id,
+      solicitacao._id,
+      "CANCELAMENTO",
+      "Solicitação cancelada pelo solicitante.",
+    );
 
-    res.json({ message: 'Solicitação cancelada com sucesso!', solicitacao });
+    res.json({ message: "Solicitação cancelada com sucesso!", solicitacao });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Erro ao cancelar solicitação.', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Erro ao cancelar solicitação.", error: error.message });
   }
-  
 };
 
 export const editarSolicitacao = async (req, res) => {
   try {
     const { id } = req.params;
-    const { quantidade, grauPrioridade, dataDesejadaAquisicao, justificativa, observacao } = req.body;
+    const {
+      quantidade,
+      grauPrioridade,
+      dataDesejadaAquisicao,
+      justificativa,
+      observacao,
+    } = req.body;
 
     const solicitacao = await Solicitacao.findById(id);
 
     if (!solicitacao) {
-      return res.status(404).json({ message: 'Solicitação não encontrada.' });
+      return res.status(404).json({ message: "Solicitação não encontrada." });
     }
 
-    if (solicitacao.status !== 'PENDENTE') {
-      return res.status(400).json({ message: 'Apenas solicitações pendentes podem ser editadas.' });
+    if (solicitacao.status !== "PENDENTE") {
+      return res
+        .status(400)
+        .json({ message: "Apenas solicitações pendentes podem ser editadas." });
     }
 
-    const isSolicitante = solicitacao.solicitante.toString() === req.usuario._id.toString();
-    const isAprovadorDoSetor = req.isAprovador && req.setorAprovador?._id.toString() === solicitacao.setor?.toString();
-    const isAdmin = req.usuario.perfil === 'ADMIN';
+    const isSolicitante =
+      solicitacao.solicitante.toString() === req.usuario._id.toString();
+    const isAprovadorDoSetor =
+      req.isAprovador &&
+      req.setorAprovador?._id.toString() === solicitacao.setor?.toString();
+    const isAdmin = req.usuario.perfil === "ADMIN";
 
     if (!isSolicitante && !isAprovadorDoSetor && !isAdmin) {
-      return res.status(403).json({ message: 'Você não tem permissão para editar esta solicitação.' });
+      return res.status(403).json({
+        message: "Você não tem permissão para editar esta solicitação.",
+      });
     }
 
     if (quantidade) solicitacao.quantidade = quantidade;
     if (grauPrioridade) solicitacao.grauPrioridade = grauPrioridade;
-    if (dataDesejadaAquisicao) solicitacao.dataDesejadaAquisicao = dataDesejadaAquisicao;
+    if (dataDesejadaAquisicao)
+      solicitacao.dataDesejadaAquisicao = dataDesejadaAquisicao;
     if (observacao) solicitacao.observacao = observacao;
     if (quantidade && solicitacao.valorUnitarioEstimado) {
       solicitacao.valorTotal = quantidade * solicitacao.valorUnitarioEstimado;
@@ -248,12 +294,18 @@ export const editarSolicitacao = async (req, res) => {
     solicitacao.dataAtualizacao = new Date();
     await solicitacao.save();
 
-    await criarLog(req.usuario._id, solicitacao._id, 'EDICAO', 'Solicitação editada.');
+    await criarLog(
+      req.usuario._id,
+      solicitacao._id,
+      "EDICAO",
+      "Solicitação editada.",
+    );
 
-    res.json({ message: 'Solicitação atualizada com sucesso!', solicitacao });
+    res.json({ message: "Solicitação atualizada com sucesso!", solicitacao });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Erro ao editar solicitação.', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Erro ao editar solicitação.", error: error.message });
   }
-  
 };

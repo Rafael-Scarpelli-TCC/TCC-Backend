@@ -1,0 +1,46 @@
+import express from 'express';
+import cors from 'cors';
+
+import PlanilhaRoutes from './routes/PlanilhaRoutes.js';
+import ItemCompraRoutes from './routes/ItemCompraRoutes.js';
+import SolicitacaoRoutes from './routes/SolicitacaoRoutes.js';
+import CronogramaRoutes from './routes/CronogramaRoutes.js';
+import UsuarioRoutes from './routes/UsuarioRoutes.js';
+import SetorRoutes from './routes/SetorRoutes.js';
+import CategoriaRoutes from './routes/CategoriaRoutes.js';
+import LogRoutes from './routes/LogRoutes.js';
+import SuapRoutes from './routes/SuapRoutes.js';
+
+import {
+  autenticar,
+  autorizar
+} from './middlewares/auth.js';
+
+const app = express();
+
+app.use(cors({
+  origin: process.env.FRONTEND_URL || '*'
+}));
+
+app.use(express.json());
+
+app.get('/', (req, res) => {
+  res.json({
+    message: 'API funcionando!'
+  });
+});
+
+app.use('/api/usuarios', UsuarioRoutes);
+app.use('/auth/suap', SuapRoutes);
+
+app.use(autenticar);
+
+app.use('/api/planilha', autorizar('ADMIN'), PlanilhaRoutes);
+app.use('/api/cronograma', autorizar('ADMIN'), CronogramaRoutes);
+app.use('/api/setores', autorizar('ADMIN'), SetorRoutes);
+app.use('/api/itens', ItemCompraRoutes);
+app.use('/api/solicitacoes', SolicitacaoRoutes);
+app.use('/api/categorias', CategoriaRoutes);
+app.use('/api/logs', LogRoutes);
+
+export default app;
