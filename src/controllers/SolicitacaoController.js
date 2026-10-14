@@ -178,6 +178,21 @@ export const aprovarRejeitarSolicitacao = async (req, res) => {
       return res.status(403).json({ message: "Acesso negado." });
     }
 
+    const solicitacaoAtual = await Solicitacao.findById(id);
+
+    if (!solicitacaoAtual) {
+      return res.status(404).json({ message: "Solicitação não encontrada." });
+    }
+
+    if (
+      req.isAprovador &&
+      solicitacaoAtual.setor?.toString() !== req.setorAprovador._id.toString()
+    ) {
+      return res.status(403).json({
+        message: "Você só pode decidir solicitações do seu setor.",
+      });
+    }
+
     const status = decisao ? "APROVADA" : "REJEITADA";
 
     const solicitacao = await Solicitacao.findByIdAndUpdate(
@@ -192,10 +207,6 @@ export const aprovarRejeitarSolicitacao = async (req, res) => {
       { new: true },
     );
 
-    if (!solicitacao) {
-      return res.status(404).json({ message: "Solicitação não encontrada." });
-    }
-
     await criarLog(
       req.usuario._id,
       solicitacao._id,
@@ -206,10 +217,12 @@ export const aprovarRejeitarSolicitacao = async (req, res) => {
     res.json({ message: "Solicitação atualizada com sucesso!", solicitacao });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
-      message: "Erro ao atualizar solicitação.",
-      error: error.message,
-    });
+    res
+      .status(500)
+      .json({
+        message: "Erro ao atualizar solicitação.",
+        error: error.message,
+      });
   }
 };
 
