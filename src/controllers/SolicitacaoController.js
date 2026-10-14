@@ -149,7 +149,7 @@ export const listarSolicitacoesAprovador = async (req, res) => {
     const filtro = {};
     if (status) filtro.status = status;
 
-    if (req.isAprovador) {
+    if (req.isAprovador && req.usuario.perfil !== "ADMIN") {
       filtro.setor = req.setorAprovador._id;
     }
 
@@ -186,10 +186,18 @@ export const aprovarRejeitarSolicitacao = async (req, res) => {
 
     if (
       req.isAprovador &&
+      req.usuario.perfil !== "ADMIN" &&
       solicitacaoAtual.setor?.toString() !== req.setorAprovador._id.toString()
     ) {
       return res.status(403).json({
         message: "Você só pode decidir solicitações do seu setor.",
+      });
+    }
+
+    if (solicitacaoAtual.status !== "PENDENTE") {
+      return res.status(400).json({
+        message:
+          "Apenas solicitações pendentes podem ser aprovadas ou rejeitadas.",
       });
     }
 
@@ -217,12 +225,10 @@ export const aprovarRejeitarSolicitacao = async (req, res) => {
     res.json({ message: "Solicitação atualizada com sucesso!", solicitacao });
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({
-        message: "Erro ao atualizar solicitação.",
-        error: error.message,
-      });
+    res.status(500).json({
+      message: "Erro ao atualizar solicitação.",
+      error: error.message,
+    });
   }
 };
 
