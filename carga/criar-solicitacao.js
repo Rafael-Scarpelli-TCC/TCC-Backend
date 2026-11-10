@@ -15,7 +15,7 @@ const SERVIDORES = Number(__ENV.SERVIDORES || 50);
 const DURACAO_S = Number(__ENV.DURACAO_S || 120);
 const AQUEC_S = Number(__ENV.AQUEC_S || 30);
 
-const PATAMARES = [10, 50, 200];
+const PATAMARES = [10, 50, 120, 200];
 
 // Conta cada resposta 201, para comparar com as solicitações gravadas no banco.
 const solicitacoesCriadas = new Counter("solicitacoes_criadas");
